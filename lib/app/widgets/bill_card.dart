@@ -4,8 +4,9 @@ import 'package:cred_assignment/app/utils/app_colors.dart';
 import 'package:cred_assignment/app/utils/common_widgets.dart';
 import 'flipper_text.dart';
 
-/// A single bill card widget matching the CRED design.
+/// A single bill card row matching the CRED design.
 ///
+/// Designed to sit inside the carousel container (no individual shadow).
 /// Displays: logo, title, subtitle, payment button, and footer/flipper text.
 class BillCard extends StatelessWidget {
   final BillCardModel card;
@@ -15,19 +16,20 @@ class BillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE8E8E8), width: 1),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.cardShadow,
-            blurRadius: 12,
-            offset: Offset(0, 4),
+            color: Color(0x18000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
           ),
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Logo
           if (card.logo != null)
@@ -37,7 +39,7 @@ class BillCard extends StatelessWidget {
             ),
           const SizedBox(width: 12),
 
-          // Title, subtitle
+          // Title + subtitle
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,6 +52,8 @@ class BillCard extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -59,27 +63,30 @@ class BillCard extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
 
-          // Right side: Pay button + tag
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Pay CTA button
-              if (card.primaryCta != null)
-                PayButton(title: card.primaryCta!.title),
-              const SizedBox(height: 6),
+          const SizedBox(width: 8),
 
-              // Flipper tag or static footer
-              FlipperText(
-                flipperConfig: card.flipperConfig,
-                footerText: card.footerText,
-              ),
-            ],
+          // Right side: Pay button + tag
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (card.primaryCta != null)
+                  PayButton(title: card.primaryCta!.title),
+                const SizedBox(height: 2),
+                FlipperText(
+                  flipperConfig: card.flipperConfig,
+                  footerText: card.footerText,
+                ),
+              ],
+            ),
           ),
         ],
       ),
