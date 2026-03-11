@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cred_assignment/app/data/models/bill_card_model.dart';
@@ -85,20 +86,49 @@ class _FlipperTextState extends State<FlipperText> {
     final currentText = config.items[_currentItemIndex].text;
 
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 600),
+      layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+        return Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
       transitionBuilder: (child, animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.5),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            )),
-            child: child,
-          ),
+        final isEntering = child.key == ValueKey<int>(_currentItemIndex);
+
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, _) {
+            final double value = animation.value;
+
+            // Define the rotation angle.
+            // Entering child: rotates from far (90 deg) to flat (0 deg).
+            // Exiting child: rotates from flat (0 deg) to far (-90 deg).
+            final rotationX = isEntering
+                ? (1.0 - value) * -math.pi / 2
+                : (1.0 - value) * math.pi / 2;
+
+            // Add vertical offset to simulate a rolling cylinder / flipper.
+            final verticalOffset = isEntering
+                ? (1.0 - value) * 10
+                : (1.0 - value) * -10;
+
+            return Opacity(
+              opacity: value.clamp(0.0, 1.0),
+              child: Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.002) // Perspective
+                  ..translate(0.0, verticalOffset, 0.0)
+                  ..rotateX(rotationX)
+                  ..scale(0.8 + 0.2 * value), // Slight scale-in
+                child: child,
+              ),
+            );
+          },
         );
       },
       child: _buildTagText(
