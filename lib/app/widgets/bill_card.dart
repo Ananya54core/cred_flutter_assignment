@@ -80,7 +80,7 @@ class BillCard extends StatelessWidget {
               children: [
                 if (card.primaryCta != null)
                   PayButton(title: card.primaryCta!.title),
-                const SizedBox(height: 2),
+                const SizedBox(height: 6),
                 FlipperText(
                   flipperConfig: card.flipperConfig,
                   footerText: card.footerText,

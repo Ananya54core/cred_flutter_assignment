@@ -127,7 +127,7 @@ class _FlipperTextState extends State<FlipperText> {
       key: key,
       style: TextStyle(
         color: tagColor,
-        fontSize: 11,
+        fontSize: 9,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.5,
       ),
