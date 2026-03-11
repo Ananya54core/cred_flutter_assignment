@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/common_widgets.dart';
-import '../../../widgets/vertical_stack_carousel.dart';
+import '../../../widgets/vertical_rotating_carousel.dart';
+import '../../../widgets/bill_card.dart';
 
 /// Home screen — displays the section header and the vertical card carousel.
 class HomeView extends GetView<HomeController> {
@@ -46,10 +47,13 @@ class HomeView extends GetView<HomeController> {
 
               const SizedBox(height: 8),
 
-              // Card carousel
+              // Card carousel — wrap in Expanded for bounded height
+              // (StackedListCarousel uses LayoutBuilder internally)
               Expanded(
-                child: VerticalStackCarousel(
-                  cards: section.cards,
+                child: VerticalRotatingCarousel(
+                  cards: section.cards
+                      .map((c) => BillCard(card: c))
+                      .toList(),
                 ),
               ),
 
@@ -74,20 +78,17 @@ class HomeView extends GetView<HomeController> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: AppColors.ctaBackground,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
-                ),
               ),
               child: Text(
                 isMock2
                     ? 'Showing 9 items  ·  Tap for 2 items'
                     : 'Showing 2 items  ·  Tap for 9 items',
-                style: TextStyle(
-                  color: AppColors.textOnDark.withValues(alpha: 0.7),
+                style: const TextStyle(
+                  color: AppColors.ctaText,
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
