@@ -123,7 +123,7 @@ class PayButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.ctaBackground,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(0),
         ),
         child: Text(
           title,

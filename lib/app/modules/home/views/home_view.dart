@@ -78,15 +78,23 @@ class HomeView extends GetView<HomeController> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.ctaBackground,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.border, width: 1),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0D000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
               child: Text(
                 isMock2
                     ? 'Showing 9 items  ·  Tap for 2 items'
                     : 'Showing 2 items  ·  Tap for 9 items',
                 style: const TextStyle(
-                  color: AppColors.ctaText,
+                  color: AppColors.textPrimary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
