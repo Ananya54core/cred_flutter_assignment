@@ -75,7 +75,7 @@ class BillCard extends StatelessWidget {
           // Right side: Pay button + tag
           Flexible(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (card.primaryCta != null)
