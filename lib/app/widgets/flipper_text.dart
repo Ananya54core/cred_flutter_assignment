@@ -86,12 +86,12 @@ class _FlipperTextState extends State<FlipperText> {
     final currentText = config.items[_currentItemIndex].text;
 
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
       layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
         return Stack(
           alignment: Alignment.center,
           children: <Widget>[
-            ...previousChildren,
+            ...previousChildren.map((child) => child),
             if (currentChild != null) currentChild,
           ],
         );
@@ -99,33 +99,53 @@ class _FlipperTextState extends State<FlipperText> {
       transitionBuilder: (child, animation) {
         final isEntering = child.key == ValueKey<int>(_currentItemIndex);
 
+        // Define a custom curve for that mechanical "snap-in" feel.
+        final curve = isEntering ? Curves.easeOutBack : Curves.easeInQuad;
+        final curvedAnimation = CurvedAnimation(parent: animation, curve: curve);
+
         return AnimatedBuilder(
-          animation: animation,
+          animation: curvedAnimation,
           builder: (context, _) {
-            final double value = animation.value;
+            final double value = curvedAnimation.value;
 
-            // Define the rotation angle.
-            // Entering child: rotates from far (90 deg) to flat (0 deg).
-            // Exiting child: rotates from flat (0 deg) to far (-90 deg).
+            // Rotation angle: 
+            // Entering child rolls down from -90 to 0.
+            // Exiting child rolls down from 0 to 90.
             final rotationX = isEntering
-                ? (1.0 - value) * -math.pi / 2
-                : (1.0 - value) * math.pi / 2;
+                ? (1.0 - value) * -math.pi / 2.2
+                : (1.0 - value) * math.pi / 2.2;
 
-            // Add vertical offset to simulate a rolling cylinder / flipper.
+            // Vertical travel for the "cylinder" effect.
             final verticalOffset = isEntering
-                ? (1.0 - value) * 10
-                : (1.0 - value) * -10;
+                ? (1.0 - value) * -12.0
+                : (1.0 - value) * 12.0;
 
-            return Opacity(
-              opacity: value.clamp(0.0, 1.0),
-              child: Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.002) // Perspective
-                  ..translate(0.0, verticalOffset, 0.0)
-                  ..rotateX(rotationX)
-                  ..scale(0.8 + 0.2 * value), // Slight scale-in
-                child: child,
+            // Simulating shading: dimmer when rotated away.
+            final brightness = 0.5 + (0.5 * value);
+
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.003) // Deep perspective
+                ..translate(0.0, verticalOffset, 0.0)
+                ..rotateX(rotationX)
+                ..scale(0.85 + 0.15 * value), // Scale punch
+              child: Opacity(
+                opacity: value.clamp(0.0, 1.0),
+                child: ShaderMask(
+                  shaderCallback: (bounds) => LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: brightness),
+                      Colors.white,
+                      Colors.white.withValues(alpha: brightness),
+                    ],
+                    stops: const [0.0, 0.5, 1.0],
+                  ).createShader(bounds),
+                  blendMode: BlendMode.modulate,
+                  child: child,
+                ),
               ),
             );
           },
