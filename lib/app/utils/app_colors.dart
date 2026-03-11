@@ -5,7 +5,7 @@ class AppColors {
   AppColors._();
 
   // Primary backgrounds
-  static const Color scaffoldBackground = Color(0xFF1A1A2E);
+  static const Color scaffoldBackground = Colors.white;
   static const Color cardBackground = Colors.white;
   static const Color cardShadow = Color(0x1A000000);
 
@@ -28,6 +28,6 @@ class AppColors {
   static const Color border = Color(0xFFECECEC);
 
   // Section header
-  static const Color sectionTitle = Color(0xFFB0B0C0);
-  static const Color viewAllText = Color(0xFFB0B0C0);
+  static const Color sectionTitle = Color(0xFF6E6E7A);
+  static const Color viewAllText = Color(0xFF6E6E7A);
 }
