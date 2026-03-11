@@ -72,8 +72,9 @@ class BillCard extends StatelessWidget {
 
           const SizedBox(width: 8),
 
-          // Right side: Pay button + tag
-          Flexible(
+          // Right side: Pay button + tag (fixed-width, no layout shift)
+          SizedBox(
+            width: 90,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
@@ -81,9 +82,14 @@ class BillCard extends StatelessWidget {
                 if (card.primaryCta != null)
                   PayButton(title: card.primaryCta!.title),
                 const SizedBox(height: 6),
-                FlipperText(
-                  flipperConfig: card.flipperConfig,
-                  footerText: card.footerText,
+                SizedBox(
+                  height: 28,
+                  child: Center(
+                    child: FlipperText(
+                      flipperConfig: card.flipperConfig,
+                      footerText: card.footerText,
+                    ),
+                  ),
                 ),
               ],
             ),

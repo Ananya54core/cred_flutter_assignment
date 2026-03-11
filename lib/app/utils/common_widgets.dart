@@ -104,7 +104,7 @@ class LogoAvatar extends StatelessWidget {
   }
 }
 
-/// Dark rounded "Pay ₹XXX" button.
+/// Dark fixed-width "₹XXX" button (no "pay" prefix).
 class PayButton extends StatelessWidget {
   final String title;
   final VoidCallback? onTap;
@@ -115,18 +115,24 @@ class PayButton extends StatelessWidget {
     this.onTap,
   });
 
+  /// Strips the "pay" prefix (case-insensitive) from the title.
+  String get _amountOnly =>
+      title.replaceAll(RegExp(r'^pay\s*', caseSensitive: false), '').trim();
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        width: 90,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.ctaBackground,
           borderRadius: BorderRadius.circular(0),
         ),
         child: Text(
-          title,
+          _amountOnly,
+          textAlign: TextAlign.center,
           style: const TextStyle(
             color: AppColors.ctaText,
             fontSize: 13,
