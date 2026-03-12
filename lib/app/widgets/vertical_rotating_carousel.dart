@@ -73,7 +73,19 @@ class _VerticalRotatingCarouselState extends State<VerticalRotatingCarousel>
     _animController = AnimationController(
       vsync: this,
       duration: widget.animationDuration,
-    )..addListener(_onAnimate);
+    )
+      ..addListener(_onAnimate)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          setState(() {
+            if (_animEnd >= 1.0) {
+              _currentIndex = _idx(_currentIndex + 1);
+            }
+            _progress = 0.0;
+          });
+        }
+      });
+
     _curve =
         CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic);
   }
@@ -92,13 +104,6 @@ class _VerticalRotatingCarouselState extends State<VerticalRotatingCarousel>
   void _onAnimate() {
     setState(() {
       _progress = _animStart + (_animEnd - _animStart) * _curve.value;
-
-      if (_curve.value >= 1.0) {
-        if (_animEnd >= 1.0) {
-          _currentIndex = _idx(_currentIndex + 1);
-        }
-        _progress = 0.0;
-      }
     });
   }
 
@@ -219,23 +224,29 @@ class _VerticalRotatingCarouselState extends State<VerticalRotatingCarousel>
               final appear = ((t - 0.4) / 0.6).clamp(0.0, 1.0);
               y = restY + (targetY - restY) * appear;
               scale = restScale + (targetScale - restScale) * appear;
-              if (appear <= 0) continue;
+              // Keep card in tree (Offstage) to preserve FlipperText state
             } else {
               // Cards 1, 2, 3: slide from current slot toward the slot above.
               y = restY + (targetY - restY) * t;
               scale = restScale + (targetScale - restScale) * t;
             }
 
+            final bool isHidden = (slot == 4 && ((t - 0.4) / 0.6).clamp(0.0, 1.0) <= 0);
+
             cards.add(
               Positioned(
+                key: ValueKey(cardIndex),
                 top: y,
                 left: leftX,
                 width: cardW,
                 height: widget.cardHeight,
-                child: Transform(
-                  alignment: Alignment.topCenter,
-                  transform: Matrix4.identity()..scale(scale, 1.0),
-                  child: widget.cards[cardIndex],
+                child: Offstage(
+                  offstage: isHidden,
+                  child: Transform(
+                    alignment: Alignment.topCenter,
+                    transform: Matrix4.identity()..scale(scale, 1.0),
+                    child: widget.cards[cardIndex],
+                  ),
                 ),
               ),
             );

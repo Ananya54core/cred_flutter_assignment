@@ -48,14 +48,46 @@ class HomeView extends GetView<HomeController> {
               const SizedBox(height: 8),
 
               // Card carousel — wrap in Expanded for bounded height
-              // (StackedListCarousel uses LayoutBuilder internally)
+              // Use KeyedSubtree with ValueKey to preserve FlipperText state
+              // across carousel reorders
               Expanded(
-                child: VerticalRotatingCarousel(
-                  cards: section.cards
-                      .map((c) => BillCard(card: c))
-                      .toList(),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.0, 0.05),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                    return Stack(
+                      alignment: Alignment.topCenter,
+                      children: <Widget>[
+                        ...previousChildren,
+                        if (currentChild != null) currentChild,
+                      ],
+                    );
+                  },
+                  child: VerticalRotatingCarousel(
+                    key: ValueKey(section.cards.length),
+                    cards: section.cards
+                        .map((c) => KeyedSubtree(
+                              key: ValueKey(c.externalId),
+                              child: BillCard(card: c),
+                            ))
+                        .toList(),
+                  ),
                 ),
               ),
+
 
               // API toggle button (for testing both states)
               _buildApiToggle(),

@@ -9,6 +9,7 @@ class BillCardModel {
   final String? footerText;
   final String? cashbackText;
   final String? expiringText;
+  final bool isAutoPayEnabled;
   final LogoModel? logo;
   final CtaModel? primaryCta;
   final BackgroundModel? background;
@@ -24,6 +25,7 @@ class BillCardModel {
     this.footerText,
     this.cashbackText,
     this.expiringText,
+    this.isAutoPayEnabled = false,
     this.logo,
     this.primaryCta,
     this.background,
@@ -46,6 +48,7 @@ class BillCardModel {
       footerText: body['footer_text'],
       cashbackText: body['cashback_text'],
       expiringText: body['expiring_text'],
+      isAutoPayEnabled: (body['payment_tag'] as String?)?.toUpperCase() == 'OUTSTANDING',
       logo: body['logo'] != null ? LogoModel.fromJson(body['logo']) : null,
       primaryCta: ctas?['primary'] != null
           ? CtaModel.fromJson(ctas!['primary'])
@@ -151,7 +154,7 @@ class FlipperConfig {
           ? FlipperItem.fromJson(json['final_stage'])
           : null,
       flipCount: json['flip_count'] ?? 1,
-      flipDelay: json['flip_delay'] ?? 2000,
+      flipDelay: json['flip_delay'] ?? 5000,
     );
   }
 }
