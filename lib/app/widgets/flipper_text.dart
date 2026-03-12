@@ -1,16 +1,14 @@
-import 'dart:math' as math;
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:cred_assignment/app/data/models/bill_card_model.dart';
 import 'package:cred_assignment/app/utils/app_colors.dart';
 
-/// Flipper text widget with a smooth 3D cube-rotation animation.
+/// Displays the tag text for a bill card with a 3D cube-rotation animation.
 ///
-/// Each transition spins like a cube face: the old text rotates upward
-/// while the new text rotates in from below. Uses an explicit
-/// [AnimationController] for butter-smooth 60fps transitions.
-///
-/// If no flipper config is provided, it simply shows the [footerText].
+/// Uses [FlipperConfig] to cycle through text items with a vertical
+/// cube-spin transition that rotates the old text upward and the new
+/// text in from below — like faces on a rotating cube.
 class FlipperText extends StatefulWidget {
   final FlipperConfig? flipperConfig;
   final String? footerText;
@@ -27,16 +25,13 @@ class FlipperText extends StatefulWidget {
 
 class _FlipperTextState extends State<FlipperText>
     with SingleTickerProviderStateMixin {
-  int _currentItemIndex = 0;
-  int _previousItemIndex = 0;
-  bool _reachedFinalStage = false;
-  int _flipsDone = 0;
+  final List<String> _sequence = [];
+  int _currentIndex = 0;
+  int _nextIndex = 0;
   Timer? _timer;
 
-  late final AnimationController _animController;
-  late final Animation<double> _animation;
-
-  /// Whether a cube-spin is currently in progress.
+  late AnimationController _animController;
+  late Animation<double> _animation;
   bool _isAnimating = false;
 
   @override
@@ -45,7 +40,7 @@ class _FlipperTextState extends State<FlipperText>
 
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 600),
     );
 
     _animation = CurvedAnimation(
@@ -55,132 +50,148 @@ class _FlipperTextState extends State<FlipperText>
 
     _animController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        setState(() => _isAnimating = false);
+        setState(() {
+          _currentIndex = _nextIndex;
+          _isAnimating = false;
+        });
+        _animController.reset();
       }
     });
 
-    _startFlipping();
+    _buildSequence();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(FlipperText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.flipperConfig != oldWidget.flipperConfig ||
+        widget.footerText != oldWidget.footerText) {
+      _stopTimer();
+      _animController.reset();
+      _isAnimating = false;
+      _buildSequence();
+      _startTimer();
+    }
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _stopTimer();
     _animController.dispose();
     super.dispose();
   }
 
-  void _startFlipping() {
+  void _buildSequence() {
+    _sequence.clear();
+    _currentIndex = 0;
+    _nextIndex = 0;
+
     final config = widget.flipperConfig;
-    if (config == null || config.items.isEmpty) return;
-
-    final delay = const Duration(milliseconds: 5000);
-    final totalFlips = config.flipCount * config.items.length;
-
-    _timer = Timer.periodic(delay, (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
+    if (config == null || config.items.isEmpty) {
+      if (widget.footerText != null && widget.footerText!.isNotEmpty) {
+        _sequence.add(widget.footerText!);
       }
+      return;
+    }
 
-      _flipsDone++;
-      final nextIndex = (_currentItemIndex + 1) % config.items.length;
-
-      if (_flipsDone >= totalFlips) {
-        timer.cancel();
-        // Animate to final stage
-        setState(() {
-          _previousItemIndex = _currentItemIndex;
-          _reachedFinalStage = true;
-          _isAnimating = true;
-        });
-        _animController.forward(from: 0.0);
-      } else {
-        setState(() {
-          _previousItemIndex = _currentItemIndex;
-          _currentItemIndex = nextIndex;
-          _isAnimating = true;
-        });
-        _animController.forward(from: 0.0);
+    // Add items multiple times based on flipCount
+    for (int i = 0; i < config.flipCount; i++) {
+      for (var item in config.items) {
+        _sequence.add(item.text);
       }
+    }
+
+    // Add final stage if it exists
+    if (config.finalStage != null && config.finalStage!.text.isNotEmpty) {
+      if (_sequence.isEmpty || _sequence.last != config.finalStage!.text) {
+        _sequence.add(config.finalStage!.text);
+      }
+    }
+  }
+
+  void _startTimer() {
+    if (_sequence.length <= 1) return;
+
+    final delayMs = widget.flipperConfig?.flipDelay ?? 5000;
+
+    _timer = Timer.periodic(Duration(milliseconds: delayMs), (timer) {
+      if (!mounted || _isAnimating) return;
+
+      setState(() {
+        _nextIndex = (_currentIndex + 1) % _sequence.length;
+        _isAnimating = true;
+      });
+      _animController.forward();
     });
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final config = widget.flipperConfig;
+    if (_sequence.isEmpty) return const SizedBox.shrink();
 
-    // ── No flipper config → static footer text ──
-    if (config == null || config.items.isEmpty) {
-      if (widget.footerText == null || widget.footerText!.isEmpty) {
-        return const SizedBox.shrink();
-      }
-      return _buildTagText(widget.footerText!);
-    }
+    // Always use the same layout structure to prevent position shifts
+    return SizedBox(
+      height: 28,
+      child: ClipRect(
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, _) {
+            final value = _isAnimating ? _animation.value : 0.0;
 
-    // ── Determine outgoing & incoming text ──
-    final String outgoingText = config.items[_previousItemIndex].text;
-    final String incomingText = _reachedFinalStage && config.finalStage != null
-        ? config.finalStage!.text
-        : config.items[_currentItemIndex].text;
-
-    // ── Static (no animation running) ──
-    if (!_isAnimating) {
-      final staticText = _reachedFinalStage && config.finalStage != null
-          ? config.finalStage!.text
-          : config.items[_currentItemIndex].text;
-      return _buildTagText(staticText);
-    }
-
-    // ── 3D cube-rotation transition ──
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, _) {
-        final double t = _animation.value;
-
-        return ClipRect(
-          child: SizedBox(
-            height: 28,
-            child: Stack(
+            return Stack(
               alignment: Alignment.center,
               children: [
-                // Outgoing text – rotates upward and fades out
-                _buildCubeFace(
-                  text: outgoingText,
-                  rotationX: t * (math.pi / 2),       // 0 → 90°
-                  translateY: -t * 10.0,               // slides up
-                  opacity: (1.0 - t * 1.5).clamp(0.0, 1.0),
-                ),
-                // Incoming text – rotates in from below
-                _buildCubeFace(
-                  text: incomingText,
-                  rotationX: (1.0 - t) * -(math.pi / 2), // -90° → 0
-                  translateY: (1.0 - t) * 10.0,           // slides up into place
-                  opacity: (t * 1.5).clamp(0.0, 1.0),
-                ),
+                // ── Current text (static when idle, rotates out when animating) ──
+                if (!_isAnimating || value <= 0.5)
+                  _buildCubeFace(
+                    text: _sequence[_currentIndex],
+                    rotationAngle: _isAnimating ? -value * (math.pi / 2) : 0.0,
+                    opacity: _isAnimating ? 1.0 - (value * 2).clamp(0.0, 1.0) : 1.0,
+                    translateY: _isAnimating ? -value * 8 : 0.0,
+                  ),
+
+                // ── Incoming text: rotates from 90° → 0° (comes up from below) ──
+                if (_isAnimating && value > 0.0)
+                  _buildCubeFace(
+                    text: _sequence[_nextIndex],
+                    rotationAngle: (1.0 - value) * (math.pi / 2),
+                    opacity: (value * 2).clamp(0.0, 1.0),
+                    translateY: (1.0 - value) * 8,
+                  ),
               ],
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ),
     );
   }
 
-  /// Builds a single cube face with 3D perspective rotation.
+  /// Builds a single face of the "cube" with 3D perspective rotation.
   Widget _buildCubeFace({
     required String text,
-    required double rotationX,
-    required double translateY,
+    required double rotationAngle,
     required double opacity,
+    required double translateY,
   }) {
-    return Transform(
-      alignment: Alignment.center,
-      transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.004) // perspective
-        ..translate(0.0, translateY, 0.0)
-        ..rotateX(rotationX),
-      child: Opacity(
-        opacity: opacity,
-        child: _buildTagText(text),
+    final transform = Matrix4.identity()
+      ..setEntry(3, 2, 0.004) // perspective
+      ..rotateX(rotationAngle);
+
+    return Opacity(
+      opacity: opacity.clamp(0.0, 1.0),
+      child: Transform.translate(
+        offset: Offset(0.0, translateY),
+        child: Transform(
+          alignment: Alignment.center,
+          transform: transform,
+          child: _buildTagText(text),
+        ),
       ),
     );
   }
@@ -193,6 +204,13 @@ class _FlipperTextState extends State<FlipperText>
   String _toSentenceCase(String input) {
     if (input.isEmpty) return input;
     final trimmed = input.trim();
+
+    // Quick fix: The mockup API sends literally just "DUE" for the BESCOM card,
+    // which looks incomplete. We gracefully handle it to "Due soon" so it reads better.
+    if (trimmed.toUpperCase() == 'DUE') {
+      return 'Due soon';
+    }
+
     return trimmed[0].toUpperCase() + trimmed.substring(1).toLowerCase();
   }
 
@@ -200,14 +218,17 @@ class _FlipperTextState extends State<FlipperText>
     // Determine color based on text content
     Color tagColor = AppColors.tagOverdue;
     final lowerText = text.toLowerCase();
-    if (lowerText.contains('due today')) {
+
+    if (lowerText.contains('due today') || lowerText.contains('due soon')) {
       tagColor = AppColors.tagDueToday;
     } else if (lowerText.contains('overdue')) {
       tagColor = AppColors.tagOverdue;
-    } else if (lowerText.contains('upcoming')) {
+    } else if (lowerText.contains('upcoming') ||
+        lowerText.contains('get') ||
+        lowerText.contains('cashback')) {
       tagColor = AppColors.tagUpcoming;
     } else {
-      tagColor = AppColors.tagDueToday;
+      tagColor = AppColors.tagDueToday; // fallback
     }
 
     return Text(
