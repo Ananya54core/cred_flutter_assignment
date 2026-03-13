@@ -22,13 +22,25 @@ class SectionHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            '$title ($billsCount)',
-            style: const TextStyle(
-              color: AppColors.sectionTitle,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(
+                color: AppColors.sectionTitle,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              children: [
+                TextSpan(
+                  text: '$title ',
+                  style: const TextStyle(letterSpacing: 1.2),
+                ),
+                const TextSpan(text: '( '),
+                TextSpan(
+                  text: billsCount.trim(),
+                  style: const TextStyle(letterSpacing: 0),
+                ),
+                const TextSpan(text: ' )'),
+              ],
             ),
           ),
           GestureDetector(
@@ -128,7 +140,7 @@ class PayButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.ctaBackground,
-          borderRadius: BorderRadius.circular(0),
+          borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
           _amountOnly,

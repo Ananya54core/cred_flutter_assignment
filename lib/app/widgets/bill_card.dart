@@ -7,7 +7,7 @@ import 'flipper_text.dart';
 /// A single bill card row matching the CRED design.
 ///
 /// Designed to sit inside the carousel container (no individual shadow).
-/// Displays: logo, title, subtitle, payment button, and footer/flipper text.
+/// Displays: logo, title, subtitle, autopay badge, payment button, and footer/flipper text.
 class BillCard extends StatelessWidget {
   final BillCardModel card;
 
@@ -39,7 +39,7 @@ class BillCard extends StatelessWidget {
             ),
           const SizedBox(width: 12),
 
-          // Title + subtitle
+          // Title + subtitle + autopay badge
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,6 +66,11 @@ class BillCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                // Auto-pay badge
+                if (card.isAutoPayEnabled) ...[
+                  const SizedBox(height: 6),
+                  const _AutoPayBadge(),
+                ],
               ],
             ),
           ),
@@ -81,15 +86,10 @@ class BillCard extends StatelessWidget {
               children: [
                 if (card.primaryCta != null)
                   PayButton(title: card.primaryCta!.title),
-                const SizedBox(height: 6),
-                SizedBox(
-                  height: 28,
-                  child: Center(
-                    child: FlipperText(
-                      flipperConfig: card.flipperConfig,
-                      footerText: card.footerText,
-                    ),
-                  ),
+                const SizedBox(height: 4),
+                FlipperText(
+                  flipperConfig: card.flipperConfig,
+                  footerText: card.footerText,
                 ),
               ],
             ),
@@ -99,3 +99,38 @@ class BillCard extends StatelessWidget {
     );
   }
 }
+
+/// A modern, minimal autopay indicator (text + icon, no button background).
+class _AutoPayBadge extends StatelessWidget {
+  const _AutoPayBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.autorenew_rounded,
+          color: Color(0xFF1DA355),
+          size: 12,
+        ),
+        SizedBox(width: 4),
+        Padding(
+          padding: EdgeInsets.only(top: 1.0),
+          child: Text(
+            'Autopay enabled',
+            style: TextStyle(
+              color: Color(0xFF1DA355),
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+              height: 1.0,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
